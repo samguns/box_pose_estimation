@@ -7,14 +7,12 @@
 ---
 #### My thoughts in pursuing this task
 1. Convert the aligned color & depth images to PointCloud for each RGB-D camera according to the given cameras' intrinsics.
-2. Then I used PCL PassThrough filter to get the corresponding box points.
-3. By now I have two half-box PointClouds in their relative camera frame. Since each cameras' extrinsics is provided, I applied a homogeneous transform to convert each PointCloud from camera frame to world frame.
-4. Concatenate these two half-box PointClouds, I get a 360-degree view of the the whole box with respect to the world frame.
-5. Compute centroid to get the center of the box.
+2. By now I have two half-box PointClouds in their relative camera frame. Since each cameras' extrinsics is provided, I applied a homogeneous transform to convert each PointCloud from camera frame to world frame.
+3. Then I used PCL PassThrough filter to get the corresponding box points.
+4. Concatenate these two filtered half-box PointClouds, I get a 360-degree view of the the whole box with respect to world frame.
+5. I tried to estimate the box pose as this [GASD tutorial](http://pointclouds.org/documentation/tutorials/gasd_estimation.php#gasd-estimation) suggests. It generated a homogeneous transform matrix that aligns box to the origin of world frame. So the inverse translation of this matrix tells me where the box center is.
 6. Using PCL Visualizer to show the box and `shift + mouse left click` to output point coordinate in console.
 
-#### What I've accomplished and the issues
-I implemented all steps above, however, the concatenated PointCloud shows these two-half boxes is not *match* as it should be. There's some offset especially in the Z-Axis. I can't really figure it out by now, any thoughts on this?
 
 ![alt text][image1]
 
@@ -25,3 +23,5 @@ I implemented all steps above, however, the concatenated PointCloud shows these 
 
 #### Running environment
 MacOS Mojave + Homebrew installed Point Cloud Library (PCL).
+
+Win7 + msvc2017 + PCL-1.9.1-AllInOne-msvc2017-win64.exe

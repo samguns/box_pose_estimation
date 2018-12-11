@@ -14,7 +14,7 @@ using namespace pcl::console;
  * The depth pixel has value ranges from 0-65535,
  * where the scale is 10^-4: pixel value of 1000 means 0.1 meter in depth.
  */
-const float depth_unit_magic = 10000.0f;
+const float depth_unit_magic = 0.0001f;
 
 int png2pcd::generate_pointclouds(int arg_base, char **argv,
                                   const struct cam_intrinsics *intrin,
@@ -64,12 +64,11 @@ int png2pcd::generate_pointclouds(int arg_base, char **argv,
   rgb_depth_cloud.height = dimensions[1];
   rgb_depth_cloud.is_dense = false;
   rgb_depth_cloud.resize (rgb_depth_cloud.width * rgb_depth_cloud.height);
-  float h_fov = atan2(intrin->ppx + 0.5f, intrin->fx) +
-	  atan2(intrin->width - (intrin->ppx + 0.5f), intrin->fx);
-  float v_fov = atan2(intrin->ppy + 0.5f, intrin->fy) +
-	  atan2(intrin->height - (intrin->ppy + 0.5f), intrin->fy);
-  float width = std::tan(h_fov / 2) * 2;
-  float height = std::tan(v_fov / 2) * 2;
+
+  float cloud_width = ((intrin->ppx) / intrin->fx) +
+      ((intrin->width - (intrin->ppx)) / intrin->fx);
+  float cloud_height = ((intrin->ppy) / intrin->fy) +
+      ((intrin->height - (intrin->ppy)) / intrin->fy);
 
   for (int y = 0; y < dimensions[1]; y++)
   {
@@ -78,16 +77,12 @@ int png2pcd::generate_pointclouds(int arg_base, char **argv,
       pixel[0] = color_image_data->GetScalarComponentAsDouble (x, y, 0, 0);
       pixel[1] = color_image_data->GetScalarComponentAsDouble (x, y, 0, 1);
       pixel[2] = color_image_data->GetScalarComponentAsDouble (x, y, 0, 2);
-      depth = depth_image_data->GetScalarComponentAsFloat (x, y, 0, 0) / depth_unit_magic;
+      depth = depth_image_data->GetScalarComponentAsFloat (x, y, 0, 0) * depth_unit_magic;
 
       PointXYZRGB xyzrgb;
-	  float px = (x - intrin->width / 2.0) / intrin->width * width * depth;
-	  float py = (intrin->height / 2.0 - y) / intrin->height * height * depth;
 
-      // In our camera frame, X-Axis starts at ppx, pointing left,
-      // assign minus sign to px to correct mirroring.
-      xyzrgb.x = px;
-      xyzrgb.y = py;
+      xyzrgb.x = (x - intrin->width / 2.0) / intrin->width * cloud_width * depth;
+      xyzrgb.y = (intrin->height / 2.0 - y) / intrin->height * cloud_height * depth;
       xyzrgb.z = depth;
       xyzrgb.r = static_cast<uint8_t> (pixel[0]);
       xyzrgb.g = static_cast<uint8_t> (pixel[1]);
