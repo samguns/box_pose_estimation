@@ -19,17 +19,21 @@ using namespace pcl::visualization;
 
 
 const struct cam_intrinsics cam_8022_intrin {
-  .fx = 923.121216,
-  .fy = 922.401917,
-  .ppx = 639.088623,
-  .ppy = 374.246979
+  923.121216,
+  922.401917,
+  639.088623,
+  374.246979,
+  1280,
+  720
 };
 
 const struct cam_intrinsics cam_8213_intrin {
-    .fx = 931.251526,
-    .fy = 931.601929,
-    .ppx = 636.607727,
-    .ppy = 367.57843
+  931.251526,
+  931.601929,
+  636.607727,
+  367.57843,
+  1280,
+  720
 };
 
 
@@ -49,6 +53,19 @@ void rigid_transform_8022 (PointCloud<PointXYZRGB>& cloud_in, PointCloud<PointXY
       -0.0223710343097415, -0.9919110665818123, 0.12494788039996335, 0.38599111429878424,
       0, 0, 0, 1;
 
+  Eigen::Matrix3f R_T;
+  R_T << cam_extrinsics.topLeftCorner(3, 3).transpose();
+  Eigen::Vector3f t;
+  t << cam_extrinsics.topRightCorner(3, 1);
+
+  Eigen::Matrix4f homo_trans;
+  homo_trans << R_T, -(R_T * t),
+	  Eigen::MatrixXf::Zero(1, 3), 1;
+
+  std::cout << "R_T " << R_T << std::endl;
+  std::cout << "t " << t << std::endl;
+  std::cout << "homo_trans " << homo_trans << std::endl;
+
   transformPointCloud(cloud_in, cloud_out, cam_extrinsics);
 }
 
@@ -59,6 +76,15 @@ void rigid_transform_8213 (PointCloud<PointXYZRGB>& cloud_in, PointCloud<PointXY
       0.03336628924906919, -0.34767139562274835, 0.937022567181537, -0.5429056723360132,
       -0.9989978864244434, -0.039585664825330144, 0.020885355152154568, 0.39505420278238745,
       0, 0, 0, 1;
+
+  Eigen::Matrix3f R_T;
+  R_T << cam_extrinsics.topLeftCorner(3, 3).transpose();
+  Eigen::Vector3f t;
+  t << cam_extrinsics.topRightCorner(3, 1);
+
+  Eigen::Matrix4f homo_trans;
+  homo_trans << R_T, -(R_T * t),
+	  Eigen::MatrixXf::Zero(1, 3), 1;
 
   transformPointCloud(cloud_in, cloud_out, cam_extrinsics);
 }
@@ -90,7 +116,7 @@ int main(int argc, char** argv) {
     print_error("Failed to generate PointCloud.\n");
     return -1;
   }
-
+#if 0
   /**
    * Using PassThrough Filter to get box
    */
@@ -114,7 +140,7 @@ int main(int argc, char** argv) {
   pass.setFilterFieldName("z");
   pass.setFilterLimits(0.4f, 0.6f);
   pass.filter(*cloud_8213_ptr);
-
+#endif
   /**
    * Rigid homogeneous transform camera coordinate to
    * world coordinate.

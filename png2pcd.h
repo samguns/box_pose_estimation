@@ -12,6 +12,8 @@ struct cam_intrinsics {
   float fy;
   float ppx;
   float ppy;
+  float width;
+  float height;
 };
 
 class png2pcd {

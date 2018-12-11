@@ -64,6 +64,12 @@ int png2pcd::generate_pointclouds(int arg_base, char **argv,
   rgb_depth_cloud.height = dimensions[1];
   rgb_depth_cloud.is_dense = false;
   rgb_depth_cloud.resize (rgb_depth_cloud.width * rgb_depth_cloud.height);
+  float h_fov = atan2(intrin->ppx + 0.5f, intrin->fx) +
+	  atan2(intrin->width - (intrin->ppx + 0.5f), intrin->fx);
+  float v_fov = atan2(intrin->ppy + 0.5f, intrin->fy) +
+	  atan2(intrin->height - (intrin->ppy + 0.5f), intrin->fy);
+  float width = std::tan(h_fov / 2) * 2;
+  float height = std::tan(v_fov / 2) * 2;
 
   for (int y = 0; y < dimensions[1]; y++)
   {
@@ -75,12 +81,12 @@ int png2pcd::generate_pointclouds(int arg_base, char **argv,
       depth = depth_image_data->GetScalarComponentAsFloat (x, y, 0, 0) / depth_unit_magic;
 
       PointXYZRGB xyzrgb;
-      float px = ((x - intrin->ppx) / intrin->fx) * depth;
-      float py = ((y - intrin->ppy) / intrin->fy) * depth;
+	  float px = (x - intrin->width / 2.0) / intrin->width * width * depth;
+	  float py = (intrin->height / 2.0 - y) / intrin->height * height * depth;
 
       // In our camera frame, X-Axis starts at ppx, pointing left,
       // assign minus sign to px to correct mirroring.
-      xyzrgb.x = -px;
+      xyzrgb.x = px;
       xyzrgb.y = py;
       xyzrgb.z = depth;
       xyzrgb.r = static_cast<uint8_t> (pixel[0]);
